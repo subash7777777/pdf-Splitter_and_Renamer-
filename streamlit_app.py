@@ -33,18 +33,18 @@ if pdf_file and excel_file:
         for i, page in enumerate(pdf_reader.pages):
             pdf_writer = PyPDF2.PdfWriter()
             pdf_writer.add_page(page)
-
+            
             output_filename = f"{names_list[i]}.pdf"
             output_path = os.path.join(output_dir, output_filename)
             with open(output_path, 'wb') as output_pdf:
                 pdf_writer.write(output_pdf)
-
+        
         # Create a ZIP file containing all the split PDFs
         zip_filename = "split_pdfs.zip"
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
             for file in os.listdir(output_dir):
                 zipf.write(os.path.join(output_dir, file), file)
-
+        
         # Provide a link to download the ZIP file
         with open(zip_filename, "rb") as f:
             st.download_button(
