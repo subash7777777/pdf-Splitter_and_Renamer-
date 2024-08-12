@@ -3,7 +3,6 @@ import PyPDF2
 import pandas as pd
 import zipfile
 import os
-import math
 
 # Streamlit app title
 st.title("PDF Splitter and Renamer")
@@ -40,42 +39,19 @@ if pdf_file and excel_file:
             with open(output_path, 'wb') as output_pdf:
                 pdf_writer.write(output_pdf)
         
-        # Split the ZIP file into chunks (e.g., 100 MB per chunk)
-        def create_zip_files(directory, chunk_size_mb=100):
-            chunk_size = chunk_size_mb * 1024 * 1024  # Convert to bytes
-            zip_counter = 1
-            zip_filename = f"split_pdfs_part_{zip_counter}.zip"
-            zipf = zipfile.ZipFile(zip_filename, 'w')
-            total_size = 0
-            
-            for file in os.listdir(directory):
-                file_path = os.path.join(directory, file)
-                total_size += os.path.getsize(file_path)
-                
-                if total_size > chunk_size:
-                    zipf.close()
-                    zip_counter += 1
-                    zip_filename = f"split_pdfs_part_{zip_counter}.zip"
-                    zipf = zipfile.ZipFile(zip_filename, 'w')
-                    total_size = os.path.getsize(file_path)
-                
-                zipf.write(file_path, file)
-            zipf.close()
-            return zip_counter
+        # Create a ZIP file containing all the split PDFs
+        zip_filename = "split_pdfs.zip"
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            for file in os.listdir(output_dir):
+                zipf.write(os.path.join(output_dir, file), file)
+        
+        # Provide a link to download the ZIP file
+        with open(zip_filename, "rb") as f:
+            st.download_button(
+                label="Download ZIP",
+                data=f,
+                file_name=zip_filename,
+                mime="application/zip"
+            )
 
-        # Create the ZIP files
-        total_parts = create_zip_files(output_dir)
-
-        # Provide download buttons for each part
-        for part in range(1, total_parts + 1):
-            part_filename = f"split_pdfs_part_{part}.zip"
-            with open(part_filename, "rb") as f:
-                st.download_button(
-                    label=f"Download ZIP Part {part}",
-                    data=f,
-                    file_name=part_filename,
-                    mime="application/zip"
-                )
-
-        st.success("PDF has been split, renamed, and zipped successfully. Click the buttons above to download the files.")
-
+        st.success("PDF has been split and renamed successfully. Click the button above to download the files.")
