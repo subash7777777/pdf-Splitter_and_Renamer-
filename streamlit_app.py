@@ -4,70 +4,56 @@ import os
 import pandas as pd
 import io
 
-def extract_account_numbers(file_path, output_folder, df):
-    """
-    Extracts account numbers from the PDF file and saves each page with a name based on account numbers.
-
-    Args:
-        file_path (str): Path to the input PDF file.
-        output_folder (str): Folder to save the extracted PDF files.
-        df (pd.DataFrame): DataFrame containing account numbers.
-
-    Returns:
-        list: List of extracted account numbers.
-    """
-    inputpdf = PdfReader(open(file_path, "rb"))
+def extract_and_rename_pdfs(pdf_reader, output_folder, df):
     extracted_numbers = []
-    for Pin, i in zip(df['Property Account No'], range(len(inputpdf.pages))):
-        output = PdfWriter()
-        output.add_page(inputpdf.pages[i])
-        acc_num = f'{Pin}_Mail_Out'
-        # Sanitize file name
-        acc_num = acc_num.replace(':', '_').replace('-', '_')
-        output_file_path = os.path.join(output_folder, f"{acc_num}.pdf")
+    for account_number, i in zip(df['Property Account No'], range(len(pdf_reader.pages))):
+        pdf_writer = PdfWriter()
+        pdf_writer.add_page(pdf_reader.pages[i])
+        
+        # Replace semicolons (:) and hyphens (-) with underscores (_)
+        sanitized_account_number = account_number.replace(':', '_').replace('-', '_')
+        output_filename = f'{sanitized_account_number}_Mail_Out.pdf'
+        output_file_path = os.path.join(output_folder, output_filename)
+        
         with open(output_file_path, "wb") as outputStream:
-            output.write(outputStream)
-        extracted_numbers.append(acc_num)
+            pdf_writer.write(outputStream)
+        extracted_numbers.append(output_filename)
     return extracted_numbers
 
 def main():
-    st.title("PDF Account Number Extraction")
+    st.title("PDF Splitter and Renamer")
 
     # Upload PDF file
-    uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
-    
-    # Upload Excel or CSV file
-    uploaded_data = st.file_uploader("Upload an Excel or CSV file", type=["csv", "xlsx"])
+    pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
 
-    # Input for output folder
-    output_folder = st.text_input("Specify output folder path", "Hotel Extraction Path")
-    
-    if uploaded_file is not None and uploaded_data is not None:
-        if not os.path.isabs(output_folder):
-            # Make output folder path absolute
-            output_folder = os.path.join(os.getcwd(), output_folder)
-        
+    # Upload Excel file
+    excel_file = st.file_uploader("Upload an Excel file", type=["csv", "xlsx"])
+
+    # User specifies the output folder path
+    output_folder = st.text_input("Specify the output folder path", r'Hotel Extraction Path')
+
+    if pdf_file and excel_file and output_folder:
         os.makedirs(output_folder, exist_ok=True)
-        
-        st.write("Extracting account numbers...")
-        
-        # Save the uploaded PDF file
-        file_path = os.path.join(output_folder, "temp_file.pdf")
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        
-        # Read the uploaded data
-        data = io.BytesIO(uploaded_data.getvalue())
-        df = pd.read_excel(data)  # Assuming uploaded file is in Excel format
-        
-        # Extract account numbers and save files
-        extracted_numbers = extract_account_numbers(file_path, output_folder, df)
-        
-        st.write("Extracted Account Numbers:")
-        for number in extracted_numbers:
-            st.write(number)
-        
-        st.write(f"Files have been saved in: {output_folder}")
+        st.write("Processing the files...")
+
+        # Read the uploaded PDF file
+        pdf_reader = PdfReader(pdf_file)
+
+        # Read the uploaded Excel file
+        if excel_file.name.endswith('.csv'):
+            df = pd.read_csv(excel_file)
+        else:
+            df = pd.read_excel(excel_file)
+
+        # Check if the number of pages matches the number of account numbers
+        if len(pdf_reader.pages) != len(df):
+            st.error("The number of pages in the PDF does not match the number of rows in the Excel file.")
+        else:
+            extracted_numbers = extract_and_rename_pdfs(pdf_reader, output_folder, df)
+            st.success(f"PDFs have been split and renamed successfully. Files are saved in: {output_folder}")
+            st.write("Extracted and renamed files:")
+            for filename in extracted_numbers:
+                st.write(filename)
 
 if __name__ == "__main__":
     main()
