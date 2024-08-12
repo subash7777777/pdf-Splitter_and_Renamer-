@@ -34,8 +34,11 @@ if pdf_file and excel_file:
             pdf_writer = PyPDF2.PdfWriter()
             pdf_writer.add_page(page)
             
-            output_filename = f"{names_list[i]}.pdf"
+            # Replace semicolons (:) and hyphens (-) with underscores (_)
+            sanitized_name = names_list[i].replace(':', '_').replace('-', '_')
+            output_filename = f"{sanitized_name}.pdf"
             output_path = os.path.join(output_dir, output_filename)
+            
             with open(output_path, 'wb') as output_pdf:
                 pdf_writer.write(output_pdf)
         
@@ -54,4 +57,4 @@ if pdf_file and excel_file:
                 mime="application/zip"
             )
 
-        st.success("PDF has been split and renamed successfully. Click the button above to download the files.")
+        st.success("PDF has been split, renamed, and zipped successfully. Click the button above to download the files.")
