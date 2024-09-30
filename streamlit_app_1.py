@@ -3,6 +3,7 @@ import PyPDF2
 import pandas as pd
 import zipfile
 import os
+import shutil
 
 # Streamlit app title
 st.title("PDF Splitter and Renamer")
@@ -27,6 +28,11 @@ if pdf_file and excel_file:
     else:
         # Create a directory to save the split PDF files
         output_dir = "split_pdfs"
+        
+        # Clear the output directory if it already exists
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)  # Remove the old directory and its contents
+
         os.makedirs(output_dir, exist_ok=True)
 
         # Split and save each page with the respective name
@@ -55,3 +61,7 @@ if pdf_file and excel_file:
             )
 
         st.success("PDF has been split and renamed successfully. Click the button above to download the files.")
+
+        # Remove the temporary files and directory after the ZIP is created
+        shutil.rmtree(output_dir)  # Delete the output directory
+        os.remove(zip_filename)  # Delete the ZIP file after download link is provided
