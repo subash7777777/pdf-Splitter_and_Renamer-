@@ -18,11 +18,11 @@ if pdf_file and excel_file:
     names_df = pd.read_excel(excel_file)
     names_list = names_df.iloc[:, 0].tolist()  # Assuming names are in the first column
 
-    # Read the PDF file
-    pdf_reader = PyPDF2.PdfFileReader(pdf_file)
+    # Read the PDF file using PdfReader (instead of PdfFileReader)
+    pdf_reader = PyPDF2.PdfReader(pdf_file)
 
     # Check if the number of pages matches the number of names
-    if pdf_reader.numPages != len(names_list):
+    if len(pdf_reader.pages) != len(names_list):
         st.error("The number of pages in the PDF does not match the number of names in the Excel file.")
     else:
         # Create a directory to save the split PDF files
@@ -30,9 +30,9 @@ if pdf_file and excel_file:
         os.makedirs(output_dir, exist_ok=True)
 
         # Split and save each page with the respective name
-        for i in range(pdf_reader.numPages):
-            pdf_writer = PyPDF2.PdfFileWriter()
-            pdf_writer.addPage(pdf_reader.getPage(i))
+        for i in range(len(pdf_reader.pages)):
+            pdf_writer = PyPDF2.PdfWriter()
+            pdf_writer.add_page(pdf_reader.pages[i])
 
             output_filename = f"{names_list[i]}.pdf"
             output_path = os.path.join(output_dir, output_filename)
