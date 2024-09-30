@@ -65,3 +65,4 @@ if pdf_file and excel_file:
         # Remove the temporary files and directory after the ZIP is created
         shutil.rmtree(output_dir)  # Delete the output directory
         os.remove(zip_filename)  # Delete the ZIP file after download link is provided
+
